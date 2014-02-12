@@ -91,12 +91,10 @@ class Ethna_DB_PEAR extends Ethna_DB
     {
         $this->db = DB::connect($this->dsninfo, $this->persistent);
         if (DB::isError($this->db)) {
-            $error = Ethna::raiseError('DB Connection Error: %s',
-                E_DB_CONNECT,
-                $this->db->getUserInfo());
-            $error->addUserInfo($this->db);
+            $exception = Ethna_Exception(sprintf('DB Connection Error: %s',
+                $this->db->getUserInfo()), E_DB_CONNECT);
             $this->db = null;
-            return $error;
+            throw $exception;
         }
 
         return 0;
@@ -151,9 +149,6 @@ class Ethna_DB_PEAR extends Ethna_DB
         }
 
         $r = $this->query('BEGIN;');
-        if (Ethna::isError($r)) {
-            return $r;
-        }
         $this->transaction[] = true;
 
         return 0;
@@ -175,9 +170,6 @@ class Ethna_DB_PEAR extends Ethna_DB
 
         // ロールバック時はスタック数に関わらずトランザクションをクリアする
         $r = $this->query('ROLLBACK;');
-        if (Ethna::isError($r)) {
-            return $r;
-        }
         $this->transaction = array();
 
         return 0;
@@ -201,9 +193,6 @@ class Ethna_DB_PEAR extends Ethna_DB
         }
 
         $r = $this->query('COMMIT;');
-        if (Ethna::isError($r)) {
-            return $r;
-        }
         array_pop($this->transaction);
 
         return 0;
@@ -520,19 +509,11 @@ class Ethna_DB_PEAR extends Ethna_DB
         $r = $this->db->query($query);
         if (DB::isError($r)) {
             if ($r->getCode() == DB_ERROR_ALREADY_EXISTS) {
-                $error = Ethna::raiseNotice('Unique Constraint Error SQL[%s]',
-                    E_DB_DUPENT,
-                    $query,
-                    $this->db->errorNative(),
-                    $r->getUserInfo());
+                throw new Ethna_Exception(sprintf('Unique Constraint Error SQL[%s]', $query),
+                    E_DB_DUPENT);
             } else {
-                $error = Ethna::raiseError('Query Error SQL[%s] CODE[%d] MESSAGE[%s]',
-                    E_DB_QUERY,
-                    $query,
-                    $this->db->errorNative(),
-                    $r->getUserInfo());
+                throw new Ethna_Exception(sprintf('Query Error SQL[%s] CODE[%d] MESSAGE[%s]',$query), E_DB_QUERY);
             }
-            return $error;
         }
         return $r;
     }

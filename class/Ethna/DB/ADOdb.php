@@ -87,11 +87,8 @@ class Ethna_DB_ADOdb extends Ethna_DB
             $this->db->SetFetchMode(ADODB_FETCH_ASSOC);
             return 0;
         } else {
-            $error = Ethna::raiseError('DB Connection Error: %s',
-                E_DB_CONNECT,
-                $this->dsn);
             $this->db = null;
-            return $error;
+            throw new Ethna_Exception(sprintf('DB Connection Error: %s',$this->dsn), E_DB_CONNECT);
         }
     }
     //}}}
@@ -195,15 +192,9 @@ class Ethna_DB_ADOdb extends Ethna_DB
         $r = $this->db->execute($query, $inputarr);
 
         if ($r === false) {
-
-            $error = Ethna::raiseError('Error SQL[%s] CODE[%d] MESSAGE[%s]',
-                E_DB_QUERY,
-                $query,
-                $this->db->ErrorNo(),
-                $this->db->ErrorMsg());
-
-            return $error;
-
+            throw new Ethna_Exception(
+                sprintf('Error SQL[%s] CODE[%d] MESSAGE[%s]',$query, $this->db->ErrorNo(), $this->db->ErrorMsg()),
+                E_DB_QUERY);
         }
 
         return $r;
